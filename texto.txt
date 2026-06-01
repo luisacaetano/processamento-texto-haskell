@@ -1,0 +1,10 @@
+A ação é essencial. Ação, reação, e interação!
+Outra linha. Outra ação, outra reação.
+
+Este é o segundo parágrafo do texto. Aqui temos palavras diferentes.
+Programação funcional é um paradigma interessante. A programação em Haskell
+utiliza funções puras e imutabilidade.
+
+O terceiro parágrafo fala sobre Haskell. Haskell é uma linguagem funcional.
+Linguagem funcional usa funções como cidadãos de primeira classe.
+Funções podem ser passadas como argumentos para outras funções.
