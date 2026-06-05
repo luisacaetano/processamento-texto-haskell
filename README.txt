@@ -152,3 +152,4 @@ ERRO: "texto.txt: openFile: does not exist"
 AUTORA
 ------
 Luisa Caetano Araujo
+
