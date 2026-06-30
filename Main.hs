@@ -11,14 +11,13 @@ module Main where
 import System.Environment (getArgs)
 import Data.Char (toLower, isAlpha)
 import Data.List (sortBy, groupBy)
-import Data.Ord (comparing)
 import qualified Data.Set as Set
 
 -- =============================================================================
 -- TIPOS DE DADOS
 -- =============================================================================
 
--- | Par (palavra, frequência)
+-- | Par (palavra, frequência). Definir um tipo próprio deixa o código mais legível.
 type WordFreq = (String, Int)
 
 -- | Um parágrafo é uma lista de linhas
@@ -28,8 +27,9 @@ type Paragraph = [String]
 -- STOPWORDS
 -- =============================================================================
 
--- | Conjunto de stopwords em português (artigos, preposições, conjunções, etc.)
--- As stopwords são armazenadas já normalizadas (sem acentos, minúsculas)
+-- | Conjunto de stopwords em português (artigos, preposições, conjunções, etc.).
+-- Usamos Set, e não lista, porque Set.member é uma busca muito mais rápida —
+-- feita uma vez para cada palavra do texto. Já normalizadas (sem acento, minúsculas).
 stopwords :: Set.Set String
 stopwords = Set.fromList
   [ -- Artigos
@@ -88,8 +88,9 @@ stopwords = Set.fromList
 -- NORMALIZAÇÃO DE TEXTO
 -- =============================================================================
 
--- | Remove acentos de um caractere, convertendo para equivalente ASCII
--- Trata os principais acentos do português
+-- | Remove o acento de um caractere, convertendo para o equivalente ASCII.
+-- Cada vogal acentuada vira sua forma simples; o caso final (_ -> toLower c)
+-- passa o restante para minúscula. Assim "Ação", "ação" e "ACAO" viram "acao".
 removeAccent :: Char -> Char
 removeAccent c = case c of
   -- Vogais minúsculas com acentos
@@ -123,7 +124,9 @@ normalizeWord = map removeAccent
 removeNonLetters :: String -> String
 removeNonLetters = filter isLetter
 
--- | Processa uma palavra: remove pontuação, normaliza acentos e capitalização
+-- | Processa uma palavra compondo duas funções com o operador ".":
+-- primeiro remove o que não é letra, depois normaliza acentos e capitalização.
+-- A composição lê-se da direita para a esquerda.
 processWord :: String -> String
 processWord = normalizeWord . removeNonLetters
 
@@ -152,7 +155,9 @@ splitOn p xs =
 extractWords :: Paragraph -> [String]
 extractWords = concatMap words
 
--- | Filtra stopwords de uma lista de palavras normalizadas
+-- | Filtra as stopwords de uma lista de palavras.
+-- Usa a função de alta ordem "filter", que recebe outra função (a função
+-- anônima \w -> ...) e mantém apenas os elementos que satisfazem a condição.
 filterStopwords :: [String] -> [String]
 filterStopwords = filter (\w -> not (Set.member w stopwords) && not (null w))
 
@@ -162,6 +167,8 @@ countFrequencies ws = map toFreqPair grouped
   where
     sorted = sortBy compare ws
     grouped = groupBy (==) sorted
+    -- toFreqPair usa casamento de padrão (pattern matching) em vez de "if":
+    -- (x:xs) casa uma lista separando cabeça x e cauda xs; [] casa a lista vazia.
     toFreqPair (x:xs) = (x, 1 + length xs)
     toFreqPair []     = ("", 0)  -- Caso impossível, mas necessário para completude
 
@@ -207,13 +214,16 @@ formatOutput paragraphFreqs =
 -- FUNÇÃO PRINCIPAL (IO)
 -- =============================================================================
 
+-- | Função principal. O tipo "IO ()" indica que ela interage com o mundo externo
+-- (lê arquivo, imprime na tela). Apenas a main é impura: toda a lógica de
+-- processamento fica em funções puras, mantendo IO e lógica bem separados.
 main :: IO ()
 main = do
   args <- getArgs
   case args of
     [filename] -> do
-      content <- readFile filename
+      content <- readFile filename                   -- IO: lê o arquivo
       let paragraphs = splitParagraphs content
-          results = map processParagraph paragraphs
-      putStr $ formatOutput results
+          results = map processParagraph paragraphs  -- lógica pura
+      putStr $ formatOutput results                  -- IO: imprime o resultado
     _ -> putStrLn "Uso: ./frequencia <arquivo_de_texto>\nExemplo: ./frequencia texto.txt"
